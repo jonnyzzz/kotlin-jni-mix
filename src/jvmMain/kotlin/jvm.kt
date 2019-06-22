@@ -1,6 +1,5 @@
 package org.jonnyzzz.jni.java
 
-import java.util.concurrent.Semaphore
 
 fun main() {
 
@@ -16,7 +15,10 @@ fun main() {
 
   Runtime.getRuntime().loadLibrary("kotlin_jni_mix")
 
-  Semaphore(1).acquire()
-
+  val ret = NativeHost().callInt(42)
+  println("ret from the native: $ret")
 }
 
+class NativeHost {
+  external fun callInt(x: Int) : Int
+}
