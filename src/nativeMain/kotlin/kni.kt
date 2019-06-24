@@ -19,6 +19,7 @@ import org.jonnyzzz.jni.JNINativeMethod
 import org.jonnyzzz.jni.JNI_OK
 import org.jonnyzzz.jni.JNI_VERSION_9
 import org.jonnyzzz.jni.JavaVMVar
+import org.jonnyzzz.jni.jclass
 import org.jonnyzzz.jni.jint
 
 
@@ -57,8 +58,8 @@ fun onLoad(vm: CPointer<JavaVMVar>,
   memScoped {
     env.pointed.pointed!!.RegisterNatives!!.invoke(env, clazz, alloc<JNINativeMethod> {
       this.name = "callInt".cstr.ptr
-      this.signature = "(I)I;".cstr.ptr
-      this.fnPtr = staticCFunction<Int, Int> { 42 + it }
+      this.signature = "(I)I".cstr.ptr
+      this.fnPtr = staticCFunction<CPointer<JNIEnvVar>, jclass, jint, jint> { _,_, it -> 42 + it }
     }.ptr, 1)
   }
   println("Completed Clazz Natives")
