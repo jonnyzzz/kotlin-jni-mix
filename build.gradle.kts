@@ -1,13 +1,14 @@
 plugins {
-  kotlin("multiplatform") version "1.3.40"
+  kotlin("multiplatform") version "1.3.61"
+  id("me.filippov.gradle.jvm.wrapper") version "0.9.2"
 }
 
 repositories {
   mavenCentral()
 }
 
-
-val javaHome = File(System.getProperty("java.home")!!)
+val javaHome
+  get() = File(System.getProperty("java.home")!!)
 
 kotlin {
   jvm()
@@ -29,4 +30,14 @@ kotlin {
   sourceSets["jvmMain"].dependencies {
     implementation(kotlin("stdlib-jdk8"))
   }
+}
+
+tasks.wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+}
+
+jvmWrapper {
+    linuxJvmUrl = "https://d3pxv6yz143wms.cloudfront.net/8.232.09.1/amazon-corretto-8.232.09.1-linux-x64.tar.gz"
+    macJvmUrl = "https://d3pxv6yz143wms.cloudfront.net/8.232.09.1/amazon-corretto-8.232.09.1-macosx-x64.tar.gz"
+    windowsJvmUrl ="https://d3pxv6yz143wms.cloudfront.net/8.232.09.1/amazon-corretto-8.232.09.1-windows-x86-jdk.zip"
 }
