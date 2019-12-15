@@ -1,16 +1,8 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
 
-plugins {
-  kotlin("multiplatform") version "1.3.61"
-  id("me.filippov.gradle.jvm.wrapper") version "0.9.2"
-}
-
-repositories {
-  mavenCentral()
-}
-
-fun setupNative(name: String, configure: KotlinNativeTargetWithTests.() -> Unit): KotlinNativeTargetWithTests {
+fun setupNative(name: String,
+                configure: KotlinNativeTargetWithTests.() -> Unit): KotlinNativeTargetWithTests {
   val os = getCurrentOperatingSystem()
   return when {
     os.isLinux -> kotlin.linuxX64(name, configure)
@@ -20,49 +12,60 @@ fun setupNative(name: String, configure: KotlinNativeTargetWithTests.() -> Unit)
   }
 }
 
-val jvm = kotlin.jvm()
-
-jvm.compilations["main"].dependencies {
-  implementation(kotlin("stdlib-jdk8"))
+plugins {
+  kotlin("multiplatform") version "1.3.61"
+  id("me.filippov.gradle.jvm.wrapper") version "0.9.2"
 }
 
-val native = kotlin.macosX64("native") {
-  binaries {
-    sharedLib()
-  }
-
-  compilations["main"].cinterops.create("jni") {
-    // JDK is required here, JRE is not enough
-    val javaHome = File(System.getenv("JAVA_HOME") ?: System.getProperty("java.home"))
-    packageName = "org.jonnyzzz.jni"
-    includeDirs(
-            Callable { File(javaHome, "include") },
-            Callable { File(javaHome, "include/darwin") },
-            Callable { File(javaHome, "include/linux") },
-            Callable { File(javaHome, "include/win32") }
-    )
-  }
+repositories {
+  mavenCentral()
 }
 
-val run by tasks.creating(JavaExec::class) {
-  main = "org.jonnyzzz.jni.java.JvmKt"
-  group = "application"
+kotlin {
+  val jvm = jvm()
 
-  dependsOn(jvm.compilations.map { it.compileAllTaskName })
-  dependsOn(native.compilations.map { it.compileAllTaskName })
-  dependsOn(native.binaries.map { it.linkTaskName })
+  jvm.compilations["main"].dependencies {
+    implementation(kotlin("stdlib-jdk8"))
+  }
 
-  systemProperty("jonnyzzz.demo", "set")
+  val native = macosX64("native") {
+    binaries {
+      sharedLib()
+    }
 
-  doFirst {
-    classpath(
-            kotlin.targets["jvm"].compilations["main"].output.allOutputs.files,
-            configurations["jvmRuntimeClasspath"]
-    )
+    compilations["main"].cinterops.create("jni") {
+      // JDK is required here, JRE is not enough
+      val javaHome = File(System.getenv("JAVA_HOME") ?: System.getProperty("java.home"))
+      packageName = "org.jonnyzzz.jni"
+      includeDirs(
+              Callable { File(javaHome, "include") },
+              Callable { File(javaHome, "include/darwin") },
+              Callable { File(javaHome, "include/linux") },
+              Callable { File(javaHome, "include/win32") }
+      )
+    }
+  }
 
-    ///disable app icon on macOS
-    systemProperty("java.awt.headless", "true")
-    systemProperty("java.library.path", native.binaries.findSharedLib("debug")!!.outputDirectory)
+  val run by tasks.creating(JavaExec::class) {
+    main = "org.jonnyzzz.jni.java.JvmKt"
+    group = "application"
+
+    dependsOn(jvm.compilations.map { it.compileAllTaskName })
+    dependsOn(native.compilations.map { it.compileAllTaskName })
+    dependsOn(native.binaries.map { it.linkTaskName })
+
+    systemProperty("jonnyzzz.demo", "set")
+
+    doFirst {
+      classpath(
+              jvm.compilations["main"].output.allOutputs.files,
+              configurations["jvmRuntimeClasspath"]
+      )
+
+      ///disable app icon on macOS
+      systemProperty("java.awt.headless", "true")
+      systemProperty("java.library.path", native.binaries.findSharedLib("debug")!!.outputDirectory)
+    }
   }
 }
 
