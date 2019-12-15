@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
+
 plugins {
   kotlin("multiplatform") version "1.3.61"
   id("me.filippov.gradle.jvm.wrapper") version "0.9.2"
@@ -5,6 +8,16 @@ plugins {
 
 repositories {
   mavenCentral()
+}
+
+fun setupNative(name: String, configure: KotlinNativeTargetWithTests.() -> Unit): KotlinNativeTargetWithTests {
+  val os = getCurrentOperatingSystem()
+  return when {
+    os.isLinux -> kotlin.linuxX64(name, configure)
+    os.isWindows -> kotlin.mingwX64(name, configure)
+    os.isMacOsX -> kotlin.macosX64(name, configure)
+    else -> error("OS $os is not supported")
+  }
 }
 
 val jvm = kotlin.jvm()
@@ -19,7 +32,8 @@ val native = kotlin.macosX64("native") {
   }
 
   compilations["main"].cinterops.create("jni") {
-    val javaHome = File(System.getProperty("java.home")!!)
+    // JDK is required here, JRE is not enough
+    val javaHome = File(System.getenv("JAVA_HOME") ?: System.getProperty("java.home"))
     packageName = "org.jonnyzzz.jni"
     includeDirs(
             Callable { File(javaHome, "include") },
