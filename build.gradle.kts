@@ -7,28 +7,48 @@ repositories {
   mavenCentral()
 }
 
-kotlin {
-  jvm()
+val jvm = kotlin.jvm()
 
-  macosX64("native") {
-    binaries {
-      sharedLib()
-    }
+jvm.compilations["main"].dependencies {
+  implementation(kotlin("stdlib-jdk8"))
+}
 
-    compilations["main"].cinterops.create("jni") {
-      val javaHome = File(System.getProperty("java.home")!!)
-      packageName = "org.jonnyzzz.jni"
-      includeDirs(
-              Callable { File(javaHome, "include") },
-              Callable { File(javaHome, "include/darwin") },
-              Callable { File(javaHome, "include/linux") },
-              Callable { File(javaHome, "include/win32") }
-      )
-    }
+val native = kotlin.macosX64("native") {
+  binaries {
+    sharedLib()
   }
 
-  sourceSets["jvmMain"].dependencies {
-    implementation(kotlin("stdlib-jdk8"))
+  compilations["main"].cinterops.create("jni") {
+    val javaHome = File(System.getProperty("java.home")!!)
+    packageName = "org.jonnyzzz.jni"
+    includeDirs(
+            Callable { File(javaHome, "include") },
+            Callable { File(javaHome, "include/darwin") },
+            Callable { File(javaHome, "include/linux") },
+            Callable { File(javaHome, "include/win32") }
+    )
+  }
+}
+
+val run by tasks.creating(JavaExec::class) {
+  main = "org.jonnyzzz.jni.java.JvmKt"
+  group = "application"
+
+  dependsOn(jvm.compilations.map { it.compileAllTaskName })
+  dependsOn(native.compilations.map { it.compileAllTaskName })
+  dependsOn(native.binaries.map { it.linkTaskName })
+
+  systemProperty("jonnyzzz.demo", "set")
+
+  doFirst {
+    classpath(
+            kotlin.targets["jvm"].compilations["main"].output.allOutputs.files,
+            configurations["jvmRuntimeClasspath"]
+    )
+
+    ///disable app icon on macOS
+    systemProperty("java.awt.headless", "true")
+    systemProperty("java.library.path", native.binaries.findSharedLib("debug")!!.outputDirectory)
   }
 }
 
