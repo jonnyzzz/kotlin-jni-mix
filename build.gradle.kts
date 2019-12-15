@@ -20,7 +20,9 @@ kotlin {
       packageName = "org.jonnyzzz.jni"
       includeDirs(
               Callable { File(javaHome, "include") },
-              Callable { File(javaHome, "include/darwin") }
+              Callable { File(javaHome, "include/darwin") },
+              Callable { File(javaHome, "include/linux") },
+              Callable { File(javaHome, "include/win32") }
       )
     }
   }
