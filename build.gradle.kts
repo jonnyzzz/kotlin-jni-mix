@@ -1,13 +1,14 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-fun setupNative(name: String,
-                configure: KotlinNativeTargetWithTests.() -> Unit): KotlinNativeTargetWithTests {
+fun KotlinMultiplatformExtension.setupNative(name: String,
+                                             configure: KotlinNativeTargetWithTests.() -> Unit): KotlinNativeTargetWithTests {
   val os = getCurrentOperatingSystem()
   return when {
-    os.isLinux -> kotlin.linuxX64(name, configure)
-    os.isWindows -> kotlin.mingwX64(name, configure)
-    os.isMacOsX -> kotlin.macosX64(name, configure)
+    os.isLinux -> linuxX64(name, configure)
+    os.isWindows -> mingwX64(name, configure)
+    os.isMacOsX -> macosX64(name, configure)
     else -> error("OS $os is not supported")
   }
 }
@@ -28,7 +29,7 @@ kotlin {
     implementation(kotlin("stdlib-jdk8"))
   }
 
-  val native = macosX64("native") {
+  val native = setupNative("native") {
     binaries {
       sharedLib()
     }
