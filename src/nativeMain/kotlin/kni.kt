@@ -13,7 +13,6 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.value
-import org.jonnyzzz.jni.JNIEnv
 import org.jonnyzzz.jni.JNIEnvVar
 import org.jonnyzzz.jni.JNINativeMethod
 import org.jonnyzzz.jni.JNI_OK
@@ -22,11 +21,16 @@ import org.jonnyzzz.jni.JavaVMVar
 import org.jonnyzzz.jni.jclass
 import org.jonnyzzz.jni.jint
 
+//NOTE: build the project is your see red code here
+//NOTE: by calling the Gradle `build` task
 
 @Suppress("unused")
 @CName("JNI_OnLoad")
 fun onLoad(vm: CPointer<JavaVMVar>,
-           reserved: CValuesRef<*>?): jint {
+           @Suppress("UNUSED_PARAMETER") reserved: CValuesRef<*>?): jint {
+  initRuntimeIfNeeded()
+  Platform.isMemoryLeakCheckerActive = false
+
   println("JNI library is here!")
 
   val env = memScoped {
@@ -54,7 +58,6 @@ fun onLoad(vm: CPointer<JavaVMVar>,
 
   println("Completed Clazz pointer: $clazz")
 
-
   memScoped {
     env.pointed.pointed!!.RegisterNatives!!.invoke(env, clazz, alloc<JNINativeMethod> {
       this.name = "callInt".cstr.ptr
@@ -68,8 +71,8 @@ fun onLoad(vm: CPointer<JavaVMVar>,
 
 @Suppress("unused")
 @CName("JNI_OnUnload")
-fun onUnload(vm: CValuesRef<JavaVMVar>?,
-             reserved: CValuesRef<*>?) {
+fun onUnload(@Suppress("UNUSED_PARAMETER") vm: CValuesRef<JavaVMVar>?,
+             @Suppress("UNUSED_PARAMETER") reserved: CValuesRef<*>?) {
   println("JNI library is unloaded!")
 }
 
