@@ -7,9 +7,6 @@ repositories {
   mavenCentral()
 }
 
-val javaHome
-  get() = File(System.getProperty("java.home")!!)
-
 kotlin {
   jvm()
 
@@ -19,6 +16,7 @@ kotlin {
     }
 
     compilations["main"].cinterops.create("jni") {
+      val javaHome = File(System.getProperty("java.home")!!)
       packageName = "org.jonnyzzz.jni"
       includeDirs(
               Callable { File(javaHome, "include") },
